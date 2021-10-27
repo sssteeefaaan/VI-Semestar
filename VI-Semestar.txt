@@ -1,0 +1,32 @@
+# Obavezni Predmeti:
+
+	- DISTRIBUIRANI SISTEMI:
+		Sve: https://www.youtube.com/watch?v=eue8XJ2eCKc&list=PLWLPHZCdUNsOzSgKLIKXKL-rZwsCaCjMl
+		Predavanja: https://www.youtube.com/watch?v=eue8XJ2eCKc&list=PLWLPHZCdUNsMlqqGy1kPUNAgP2q8lB5Fu
+		Računske vežbe: https://www.youtube.com/watch?v=qA-1PQLx_KA&list=PLWLPHZCdUNsMjNArHDU5XLRO_qdFj7P-f
+
+	- SOFTVERSKO INŽINJERSTVO:
+		Sve: https://www.youtube.com/watch?v=jFu4deBd8dE&list=PLWLPHZCdUNsPyAxzmtWc_poMS9heQ7TTy
+		Predavanja: https://www.youtube.com/watch?v=2Jr6jC2h1-U&list=PLWLPHZCdUNsN_Td7_RNb-tZM284wA305U
+		Računske vežbe: https://www.youtube.com/watch?v=jFu4deBd8dE&list=PLWLPHZCdUNsNAgXQ-7yGncih2MIuxPQx-		
+
+	- MIKRORAČUNARSKI SISTEMI:
+		Sve: https://www.youtube.com/watch?v=INvwhYD0tmA&list=PLWLPHZCdUNsNiHdBZluOjcKoOMaHHXm20
+		Predavanja: https://www.youtube.com/watch?v=INvwhYD0tmA&list=PLWLPHZCdUNsNlTtQq6ru_XseZVYq1zm8e
+		Računske vežbe: https://www.youtube.com/watch?v=B4h5RujE1xo&list=PLWLPHZCdUNsO-IUAJZ4E5s2OYSnQP287u
+		
+	- INFORMACIONI SISTEMI:
+		Sve: https://www.youtube.com/watch?v=4CfRYuYUdSg&list=PLWLPHZCdUNsPawZE2Z28d1t3ePXKaY3Rv
+		Predavanja: https://www.youtube.com/watch?v=LPAhgKDBzfo&list=PLWLPHZCdUNsPqWR-3B2GlQQz35I7WVBeW
+		Računske vežbe: https://www.youtube.com/watch?v=4CfRYuYUdSg&list=PLWLPHZCdUNsMfiknkKEqU_RR6dU1EU9kj
+		Laboratorijske vežbe: https://www.youtube.com/watch?v=uWuuzLxrXas&list=PLWLPHZCdUNsNnAK4acc9K_hH3ygkxUrVS
+
+	- ENGLESKI JEZIK 2:
+		Predavanja: https://www.youtube.com/watch?v=JPMXi4pHXcA&list=PLWLPHZCdUNsMhETZCGJW4s17-CY8mXfCy
+
+# Izborni Predmeti:
+
+	- SISTEMI BAZA PODATAKA:
+		Sve: https://www.youtube.com/watch?v=bmobn4NkuuY&list=PLWLPHZCdUNsM1fQ1_zhsTSQsbQxql-Yiq
+		Predavnja: https://www.youtube.com/watch?v=bmobn4NkuuY&list=PLWLPHZCdUNsOw50ohUCzq6jml_JPjxm6r
+		Laboratorijske vežbe: https://www.youtube.com/playlist?list=PLWLPHZCdUNsPtwPCrBwzsozmYV8OTqw6z
