@@ -1,0 +1,18 @@
+16.
+Informacioni sistem za naplatu usluga softverske kompanije.
+
+Čuva se evidencija zaposlenih, klijenata i projekata.
+
+Za svaki projekat su od značaja naziv, opis,
+broj ljudi koji je angažovan, a realizuje po narudžbini nekog klijenta.
+
+Svaki zaposleni je dodeljen projektu za određen broj sati,
+a relevantne su informacije: ime, prezime, radno mesto, iskustvo.
+
+Omogućiti automatsko generisanje obračuna cene za dati broj dana,
+uzimajući broj ljudi koji je angažovan, njihove pozicije, iskustvo,
+broj sati angažovanja.
+
+Obračun se takođe trajno čuva u bazi.
+
+Obrazac: Tok Akcije

@@ -1,0 +1,62 @@
+Tačne tvrdnje za PIC16F84A:
+	- Uslovni i bezuslovni skokovi se izvršavaju u dva takta procesora
+	- Ima Flash programsku memoriju
+	- Ima EEPROM memoriju za podatke
+	- RAM memorija je podeljena na registre opšte i specijalne namene
+	- Ima samo jednu adresu interapt vektora
+	- Ima 8-bit slobodni brojač
+	- Ima 4 izvora prekida
+	- PORTB ima osam pinova
+	- Pin 4 porta A se MOŽE koristiti kao spoljni ulaz za brojač TMR0
+	- PORTB i TRISB su u različitim bankama
+	- PORTB i TRISA su u različitim memorijskim bankama
+	- Vrednost 0 na odgovarajućoj poziciji u TRISA određuje izlazni smer pina sa PORTA
+	- Ima 2 memorijske banke
+	- U OPTION registru postoje bitovi za podešavanje preskalera
+	- Ima razdvojenu memoriju za podatke i instrukcije
+	- PORTA ima pet pinova
+	
+Netačne tvrdnje za PIC16F84A:
+	- Sve instrukcije se izvršavaju u dva takta procesora
+	- Sve instrukcije se izvršavaju u jednom taktu procesora
+	- Poziv i povratak iz potprograma se izvršavaju u jednom taktu procesora
+	- Ima Flash memoriju za podatke
+	- Ima zajedničku memoriju za podatke i instrukcije
+	- PORTA ima osam pinova
+	- Pin RA4 se NE MOŽE koristiti kao spoljni ulaz za brojač TMR0
+	- PORTB ima 5 pinova
+	- RP1 bit u STATUS registru se koristi za selekciju banke
+	- Ima 16-bit slobodni brojač
+	- Ima 3 izvora prekida
+	- Ima zajedničku memoriju za podatke i instrukcije
+	- PORTA i TRISA su u istoj banci
+	
+Smer pinova portova se određuje kod PIC16F84A:
+	- U TRISA sa PORTA, TRISB za PORTB
+	
+Ako je vrednost TRISA registra 0x03, onda je tačna tvrdnja:
+	- Pinovi RA2, RA3 i RA4 su izlazni
+	- Pinovi R0, R1 su ulazni
+
+Selekciju memorijske banke 1 vršimo instrukcijom:
+	- BSF STATUS, RP0
+	
+Ako je vrednost TRISB registra 0x0F, onda je tačna tvrdnja:
+	- Pinovi RB0-RB3 su ulazni
+	- Pinovi RB4-RB7 su izlazni
+
+Nakon BCF STATUS, RP0 došlo bi do logičke greške u kodu za:
+	- MOVWF TRISB, jer je TRISB u neparnoj banci, a odabrali smo parnu
+	
+Ako je vrednost TRISA registra 0x01, onda je tačna tvrdnja:
+	- Pin RA0 je ulazni
+	- Pinovi RA1-RA4 su izlazni
+	
+Nakon BSF STATUS, RP0 došlo bi do logičke greške u kodu za
+	- MOVWF PORTA, jer je PORTA u parnoj banci, a odabrali smo neparnu
+	
+Koja instrukcija stavlja vrednost nultog bita brojača na 1:
+	- BSF BROJAC, 0
+	
+Ako je vrednost INTCON registra 0x20, omogućeno je:
+	- TOEI == 1 <=> Interapt kada brojač TMR0 prekorači vrednost (izbroji do 255)

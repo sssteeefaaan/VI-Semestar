@@ -1,0 +1,98 @@
+Mašinski jezik mikrokontrolera PIC16F84
+ - RISC (Reduced Instruction Set Computer), redukovani skup intruksikcija
+ - 14-bitne instrukcije
+ - U zavisnosti od tipa, mogu sadržati sledeće elemente
+	- f => Memorijski (fajl) registar (7-bit)
+	- d => Destinacioni bit (1-bit)
+		- d == 0 => destinacija je akumulator/radni/working registar (w)
+		- d == 1 => destinacija je memorijski registar
+	- b => Kod odgovarajućeg bita u registru (3-bit)
+	- k => Konstanta (literal)
+		- 8-bit => Operacije za rad sa memorijskim registrima
+		- 11-bit => Operacije bezuslovnog skoka (adresa skoka)
+		
+Tipovi mašinskih instrukcija PIC16F84
+	- Tri grupe:
+		- Bajt-orijantisane za rad sa memorijskim registrima
+		- Bit-orijentisane za rad sa memorijskim registrima
+		- Kontrolne instrukcije i rad sa literalima
+	- Sve instrukcije se izvršavaju u jednom taktu procesora, izuzev:
+		- Instrukcija skoka (uslovni, bezuslovni)
+		- Poziva i povratka iz potprograma
+		* Ove instrukcije se izvršavaju u dva takta!
+		
+Bajt-orijentisane naredbe za rad sa memorijskim registrima
+	 _____________________________________________________
+	| 13		   8 | 7		  	   | 6			    0 |
+	|				 |			  	   |			      |
+	| Operacioni kod | Destinacija (d) | Fajl registar(f) |
+	|________________|_________________|__________________|
+
+ - MOVF f, d => sadržaj registra f se smešta u w/f registar
+	- d == 0 => w <= f
+	- d == 1 => f <= f (korisno za testiranje ZERO FLAG-a)
+ - SWAPF f, d => Niža i viša četvorka osmobitnog file registra menjaju mesta, a rez ide u working(d==0)/file(d==1)
+ - [ADDWF, ANDWF, SUBWF, IORWF, XORWF] f, d
+     ______________________________________
+	| Opcode |    d == 0    |    d == 1    |
+	|--------|--------------|--------------|
+	| ADDWF  | w <= f  +  w | f <= f  +  w |
+	| SUBWF  | w <= f  -  w | f <= f  -  w |
+	| ANDWF  | w <= f and w | f <= f and w |
+	| IORWF  | w <= f  or w | f <= f  or w |
+	| XORWF  | w <= f xor w | f <= f xor w |
+	|________|______________|______________|
+	
+ - COMF REGISTAR, d => w <= kompement(REGISTAR)/ REGISTAR <= komplement(REGISTAR)
+ - INCF f, d => inkrementiranje
+ - DECF f, d => dekrementiranje
+ - RRF f, d  => rotiranje udesno sa carry flag-om
+ - RLF f, d  => rotiranje ulevo sa carry flag-om
+
+Bit-orijentisane naredbe za rad sa memorisjkim registrima
+	 ________________________________________________
+	| 13		  10 | 9		7 | 6			   0 |
+	|				 |			  |					 |
+	| Operacioni kod | Bit kod(b) | Fajl registar(f) |
+	|________________|____________|__________________|
+
+	- BTFSS f, b => Bit Test Flag Skip if Set => Preskače jednu (sledeću) instrukciju akko je f[b] == 1
+	- BTFSC f, b => Bit Test Flag Skip if Clear => Preskače jednu (sledeću) instrukciju akko je f[b] == 0
+	- BSF f, b => f[b] <= 1
+	- BCF f, b => f[b] <= 0
+	
+Rad sa literalima (memorijski registri)
+	 __________________________________
+	| 13		   		8 | 7	     0 |
+	|				 	  |			   |
+	| Operacioni kod 	  | Literal(k) |
+	|_____________________|____________|
+
+	- k je u ovom slučaju 8-bit konstanta
+	- MOVLW k
+		w <= k
+	- [ADDLW, ANDLW, SUBLW, IORLW, XORLW] k
+		 _______________________
+		| Opcode |              |
+		|--------|--------------|
+		| ADDWF  | w <= k  +  w |
+		| SUBWF  | w <= k  -  w |
+		| ANDWF  | w <= k and w |
+		| IORWF  | w <= k  or w |
+		| XORWF  | w <= k xor w |
+		|________|______________|
+	
+	- RETLW k => povratak iz interapra uz w <= k
+
+Rad sa literalima (skokovi)
+	 __________________________________________________
+	| 13		   	   11 | 10					     0 |
+	|				 	  |			  				   |
+	| Operacioni kod 	  | Apsolutna adresa skoka (k) |
+	|_____________________|____________________________|
+	- k je u ovom slučaju 11-bit konstanta
+	- GOTO k
+		- w <= k
+		- Bezuslovni skok
+	- CALL k
+		- Poziv potprograma

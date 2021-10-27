@@ -1,0 +1,107 @@
+Adresna šema
+
+A4
+1010 0100 - A4 - 8259
+1010 0110 - A6 - 8259
+1010 1000 - A8 - 8255
+1010 1010 - AA - 8255
+1010 1100 - AC - 8255
+1010 1110 - AE - 8255
+
+--------------------------------------
+Konfiguracija 8259 - ICW1
+A_0 == 0
+
+A7-A5 => adrese vektora interapta (samo za 80/85 mod)
+Ovo je za 8086 nebiutno, tako da je sve 0
+
+A4 je const 1
+
+LTIM(0) => Okidanje na ivicu (uzlaznu)
+LTIM(1) => Okidanje na nivo (jedinica)
+
+ADI => Nije relevantno za 8086, pa ide 0
+
+SNGL(0) => ima više od jedne komponente 8259, pa se vezuju kaskadno
+SNGL(1) => postoji jedan 8259
+
+IC4(0) => Nije potreban ICW4
+IC4(1) => Potreban je ICW4
+
+A7 A6 A5 A4(1) LTIM ADI SNGL IC4
+0  0  0   1     0    0   1    1
+
+=> ICW1 = 0X13
+
+-------------------------------
+Konfiguracija 8259 - ICW2
+A_0 == 1
+
+173 = 1010 1101
+172 = 1010 1100
+
+173 && 1111 1000
+172 && 1111 1000
+=> 1010 1000
+
+A7 A6 A5 A4 A3 | D2 D1 D0
+1  0  1  0  1    0  0  0
+
+=> ICW2 == 0xA8
+
+----------------------------------
+Konfiguracija 8259 - ICW4
+A_0 == 1
+
+SFNM(1) => Special Fully Nested
+SFNM(0) => Not Special fully nested
+
+Buffered, Master/Slave (0x) => not buffered
+Buf, M/S (10) => Buffered, Slave mode
+Buf, M/S (11) => Buffered, Master mode
+
+AutoEndOfInterupt(0) => Normal
+AEOI(1) => Auto
+
+mPM(0) => MCS-80/85 mode
+mPM(1) => 8086/8080 mode
+
+D7 D6 D5 SFNM BUF M/S AEOI mPM
+0  0  0    0   0   0   1    1
+
+=> ICW4 = 0x03
+------------------------------------------
+Konfugiracija 8259 - OCW1
+A_0 == 1
+
+Reset
+172 = 1010 1.100
+1010 1100 && 0000 0111 => 4
+
+Inkrement
+173 = 1010 1101
+1010 1101 && 0000 0111 => 5
+
+Izabrane su linije IR4 i IR5
+
+M7 M6 M5 M4 M3 M2 M1 M0
+1  1  0  0  1  1  1  1
+
+=> OCW1 = 0xCF 
+
+----------------------------------------
+TABELA VEKTORA PREKIDA 8259
+
+CS - VIŠA 16-BITNA ADRESA, dobija se:
+OFFSET IME_PREKIDNE_PROCEDURE
+
+IP - NIŽA 16-BITNA ADRESA, dobija se:
+SEG IME_PREKIDNE_PROCEDURE
+
+Reset:
+	*IP: 172*4 = 688 		(0x2B0)
+	*CS: 172*4 + 2 = 690 	(0x2B2)
+ 
+Inkrement:
+	*IP: 173*4 = 692		(0x2B4)
+	*CS: 173*4 + 2 = 694	(0x2B6)

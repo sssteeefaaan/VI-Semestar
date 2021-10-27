@@ -1,0 +1,142 @@
+RAM struktura
+	
+00h	 _______________________ 80h
+	|___BANK0___|___BANK1___|
+	|		  INDF			|
+	|	TMR0	|	OPTION	|
+	|		   PLC			|
+	|		  STATUS		|
+	|		   FSR			|
+	|	PORTA	|	TRISA	|
+	|	PORTB	|	TRISB	|
+	|						|
+	|	EEDATA	|	EECON1	|
+	|	EEADR	|	EECON2	|
+	|		 PCLATH			|
+	|________INTCON_________|
+	|						|
+	|	    68 bajtova		|
+	|	GPR - zajednički	|
+	|		za obe banke	|
+	|_______________________|
+	
+STATUS registar
+ _______________________________________________
+|     |     |     |     |     |     |     |     |
+| IRP | RP1 | RP0 | TO- | PD- |  Z  | DC  |  C  |
+|_____|_____|_____|_____|_____|_____|_____|_____|
+
+	
+	- Bitovi:
+		7: IRP 			=> ne koristi se
+		6,5: (RP1, RP0) => koriste se za selekciju banke, s tim što PIC16F84A ima samo dve banke, pa RP1 nema uticaj i ne koristi se
+		4: TO- (timeout):
+			- 1 => Nakon dovođenja napajanja/CLRWDT/SLEEP
+			- 0 => Dogodio se timeout reset od WDT
+		3: PD- (power down):
+			- 1 => Nakon dovođenja napajanja ili CLRWDT
+			- 0 => Nakon SLEEP naredbe
+		2: Z (zero):
+			- 1 => Rezultat aritmetičke ili logičke operacije je bio 0
+			- 0 => Rezultat nije bio 0
+		1: DC (digit carry):
+			- 1 => Došlo je do prenosa iz niže u višu tetradu
+			- 0 => Nije došlo do prenosa iz niže u višu tetradu
+		0: C (carry/borrow):
+			- Sabiranje:
+				- 1 => Dogodio se prenos bita najviše pozicije
+				- 0 => Nije se dogodio prenos bita najviše pozicije
+			- Oduzimanje:
+				- 1 => Nije se pozajmio bit najviše pozicije
+				- 0 => Pozajmio se bit najviše pozicije
+				
+INTCON registar
+ _______________________________________________________
+|      |      |      |      |      |      |      |      |
+| GIE  | EEIE | T0IE | INTE | RBIE | T0IF | INTF | RBIF |
+|______|______|______|______|______|______|______|______|
+
+ - Bitovi:
+	7: GIE  => Bit globalne dozvole prekida
+		- 1 => Svi prekidi su omogućeni
+		- 0 => Svi prekidi su onemogućeni
+	6: EEIE => Dozvoljava prekid usled završetka upisa u EEPROM
+		- 1 => Omogućen prekida
+		- 0 => Onemogućen prekid
+	5: T0IE => Dozvoljava prekid usled prekoračenja TMR0:
+		- 1 => Omogućen
+		- 0 => Onemogućen
+	4: INTE => Dozvoljava prekid na RB0/INT priključku:
+		- 1 => Omogućen
+		- 0 => Onemogućen
+	3: RBIE => Dozvoljava prekid po promeni RB4-RB7:
+		- 1 => Omogućen
+		- 0 => Onemogućen
+	2: T0IF => Indikator (fleg) prekida TMR0:
+		- 1 => Došlo je do ove vrste prekida
+		- 0 => Nije došlo do ove vrste prekida
+	1: INTF => Indikator prekida RB0/INT:
+		- 1 => Došlo je do ove vrste prekida
+		- 0 => Nije došlo do ove vrste prekida
+	0: RBIF => Indikator prekida RB4-RB7:
+		- 1 => Došlo je do ove vrste prekida
+		- 0 => Nije došlo do ove vrste prekida
+		
+OPTION registar
+ ___________________________________________________________________
+|        |        |        |        |       |       |       |       |
+|  RBPU- | INTEDG |  T0CS  |  T0SE  |  PSA  |  PS2  |  PS1  |  PS0  |
+|________|________|________|________|_______|_______|_______|_______|
+
+ Bitovi:	
+	7: Not RBPU => Bit Pull-up otpornika PORTB:
+		- 1 => PORTB otpornici su isključeni
+		- 0 => PORTB otpornici su uključeni
+	6: INTEDG => Ivica za spoljašnji prekid RB0:
+		- 1 => Rastuća
+		- 0 => Opadajuća
+	5: T0CS => Izbor takta za TMR0:
+		- 1 => Spoljašnji (RA4)
+		- 0 => Interni CLK
+	4: T0SE => Izbor ivice za TMR0 kada radi sa spoljnim taktom (na RA4):
+		- 1 => Opadajuća ivica (1 => 0) inkrementira TMR0
+		- 0 => Rastuća ivica (0 => 1) inkrementira TMR0
+	3: PSA => Dodela preskalera:
+		- 1 => WDT tajmeru
+		- 0 => TMR0 tajmeru
+	2: PS2 \
+	1: PS1  > Bivoti za izbor odnosa deljenja preskalera
+	0: PS0 /
+
+EECON1 registar
+ ______________________________________________________
+|     |     |     |      |        |      |      |      |
+|  -  |  -  |  -  | EEIF | WREERR | WREN |  WR  |  RD  |
+|_____|_____|_____|______|________|______|______|______|
+
+ Bitovi:
+	4: EEIF  => Interrupt fleg za detekciju prekida nakon upisa u EEPROM
+	3: WRERR => Greška pri prenosu
+	2: WREN  => Omogućiti upis
+	1: WR 	 => Izvršiti upis
+	0: RD 	 => Izvršiti čitanje
+	
+CONFIGURATION WORD
+	 _________________________________________________________
+	|      |     |     |      |        |      |       |       |
+	|  CP  | ... | ... |  CP  | PWRTE- | WDTE | FOSC1 | FOSC0 |
+	|______|_____|_____|______|________|______|_______|_______|
+
+ Bitovi:
+	13-4: CP (Code Protection):
+		- 1 => Zaštita isključena
+		- 0 => Programska memorija zaštićena
+	3: PWRTE- => Power-Up timer
+		- 1 => Isključen Power-Up timer
+		- 0 => Uključen Power-Up timer
+	2:
+	1-0: FOSC1, FOSC0 => Selekcija tipa oscilatora
+		- 00 => RC
+		- 01 => HS
+		- 10 => XT
+		- 11 => LP

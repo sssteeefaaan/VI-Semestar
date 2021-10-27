@@ -1,0 +1,49 @@
+TEKST ZADATKA:
+Projektovati mikroračunarski sistem za sabiranje celih brojeva na bazi mikroprocesora i8086 i jedne komponente 8255A (ili 8279).
+Sistem sadrži 8 sedmosegmentnih displeja i tastaturu sa tasterima od 0 do 9, +, = i BACK taster. 
+- Pritiskom na tastere sa brojevima unosi se jedna cifra željenog broja. 
+- Pritiskom na taster + uneti (višecifreni) broj se sabira sa prehodno unetim brojevima i rezultat ispisuje na displeju. 
+- Pritiskom na taster = sabira se tekući broj sa prethodno unetim i rezultat se prikazuje na displeju, a zbir se postavljna na 0 (RESET), tako da sa sledećim unosom počinje novo sabranje.
+- Pritiskom na BACK taster briše se zadnja uneta cifra.
+
+Komponenta 8255 je na adresi F0h, a stanje pritisntih tastera odrediti skeniranjem (bez interapta).
+Smatrati da se ne može više tastera pritisnuti odjednom i nije potrebno implementirati lock-out i roll-over tehnike.
+Za rešenje ovog zadatka nije bitno vreme na koliko se vrši skeniranje tastature.
+
+Napomena: Rešenje zasnovano na komponenti 8279 donosi bonus poene.
+
+Kratko objašnjenje šeme.
+Kod je prokomentarisan u projektu, ukoliko ima nejasnoća, možemo prodiskutovati na teams-u.
+
+Adresna šema
+Komponenta 8255 se nalazi na adresi
+0xF0H
+
+0000 0000 0000 1111 0000 => PORTA 
+0000 0000 0000 1111 0010 => PORTB
+0000 0000 0000 1111 0100 => PORTC
+0000 0000 0000 1111 0110 => PORT_CONFIG
+
+A19-A4 su dovedeni na 12-ulazno OR kolo, dok su A3, A2 i A1 linije dovedene na dekoder.
+4 izlaza dekodera selektuju komponentu 8255, pa su dovedeni na AND kolo i OR-ovane sa A0 (parne adrese).
+
+A1 i A2 su odabrani za adresiranje unutar komponente 8255.
+
+Izabrao sam da mi je port A izlazni port za sedmosegmentne displeje,
+port B takođe izlazni, s tim što služi za skeniranje pritiska tastera
+i izlazi ovog porta su lečovani, kako bi se održao signal. Služi za indikaciju kolone matrice tastera.
+
+Viši deo porta C je takođe izlazni i predstavlja kodirane signale za odabir jednog od 8 sedmosegmentnih displeja.
+
+Jedini ulazni port jeste niži deo porta C i to samo dve linije koje koristim kako bih
+odabrao vrstu u kojoj se nalazi pritisnut taster.
+
+Procesor je taktovan na 100kHz kako bi se ispravno očitali tasteri.
+
+Nisam najsnalažljivi što se hardvera tiče, ali našao sam dokumentaciju na internetu o komponenti 8279 i iako nisam uspeo da je konfigurišem i iskoristim
+za ovaj zadatak, pomogla mi je oko logike kako da ga odradim, takođe i upravo oko takta, jer je pisalo da se za faktor bira da je frekvencija
+100kHz kako bi svaki taster imao 5ms za očitavanje. Izlazi porta B su lečovani, kako bi se signal duže održao, ukoliko grešim oko ove logike i
+samo sam imao sreću pri izradi, da mi je to palo na pamet da odradim, ispravite me.
+
+Takođe Vas molim da uvažite kod iako nije pisan sa procedurama. Znate i sami da Proteus ima problema sa ovim,
+tako da nisam uspeo da debugujem, pa sam radio sve u code segmentu. Mogao bih da odradim i dodatnu verziju sa procedurama, mada ne znam koliko bi funkcionisala...

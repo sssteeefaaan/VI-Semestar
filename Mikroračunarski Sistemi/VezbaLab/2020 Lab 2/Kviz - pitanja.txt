@@ -1,0 +1,75 @@
+Ako vektor prekida ima i = 177, onda izvor prekida treba povezati na
+	- IR1
+	
+Kako započeti inicijalizaciju komponente 8259
+	- Samo slanjem reči ICW1 (A0 = 0) i cela procedura inicijalizacije je inicirana i prva reč je poslata
+
+Zaokruži x činjenicu o 8259
+	Netačne:
+		- Jedan zapis u tabeli prekida je veličine 2B (Jedan zapis je 2B IP + 2B CS = 4B)
+		- Ima 7 interupt linija (NETAČNO, ima 8)
+		- Niža linija interapt ima podrazumevano niži prioritet (IR0 ima najviši prioritet, IR7 najniži)
+		- Ima 2 adresne linije (ima jednu)
+		- Ima ukupno tri ICW reči (ICW1, ICW2, ICW3, ICW4)
+	Tačne:
+		- Jedan zapis u tabeli prekida je veličine 4B
+		- Ima ukupno 256 zapisa u tabeli prekida
+		- IR7 je PODRAZUMEVANO linija nižeg prioriteta
+		- Niža linija interapt linija ima podrazumevano viši prioritet
+		- Ima 1 adresnu liniju
+		- Jedinica na poziciji i u OCW1 označava da je prekid sa linije IRi zabranjen
+		- Nula na poziciji i u OCW1 označava da je prekid sa linije IRi omogućen
+		
+Od čega je skraćenica OCW
+	- Operation Control Word
+
+Ako OCW1 ima vrednost FFh, to znači
+	- Svi prekidi su onemogućeni
+	
+Koliko prekidnih procedura se može napisati kod 8086 mikroprocesora?
+	- 256 (2B IP, 2B CS => 4B * X = 1024 => X = 256)
+
+Linije INT i INTA služe:
+		- INT signal ide od komponente ka procesoru i označava da prekid postoji, dok INTA signal ide od procesora ka
+			komponenti i označava prihvatanje prekida.
+			
+	Čemu služe linije D0-D7 kod komponente 8259?
+		- Za inicijalizaciju komponente, postavljanje vektora prekida i slanje komandnih reči u toku rada komponente.
+		
+Označiti tačan odgovor za X i Y u sekvenci inicijalizacije tabele vektora prekida
+	MOV AX, Y PREKID
+	MOV [ES:2B0H], AX
+	MOV AX, X PREKID
+	MOV [ES:2B2H], AX
+	
+	- (X, Y) = (OFFSET, SEG)
+	
+Označiti tačan odgovor za adresu X u sekvenci inicijalizacije tabele vektora prekida za I = 168
+	MOV AX, OFFSET PREKID
+	MOV [ES:2A0H], AX
+	MOV AX, SEG PREKID
+	MOV [ES:X], AX
+	
+	- X = 2A2H
+
+Koje dve reči kod 8259 je neophodno podesiti na osnovu indeksa interappta u tabeli prekida:
+	- OCW1, OCW2
+	
+Kako izgleda procedura inicijalizacije 8259 komponente vezana za ICW reči:
+	- ICW1, ICW2, ako je kaskadna onda ICW3, ako treba onda ICW4
+
+Pojavila su se dva prekida, jedan na liniji IR2, drugi na liniji IR7. Koji prekid će biti prvi obrađen?
+	- Zavisi od postavljene konfiguracija koja se postavlja rečju OC2
+	
+Ako vektor prekida ima i=192, onda je validna vrednost za ICW2:
+	- C0h
+	
+Ako vektor prekida ima i = 149, onda izvor prekida treba povezati na:
+	- (149)d => (1001 0101)b && 0000 0111 => (101)b => (5)d => IR5
+	- IR5
+
+Zapis u tabeli prekida kod 8086 mikroprocesora predstavlja (redom počevši od nižih adresa ka višim)
+	- Vrednost programskog brojača pa vrednost segmentnog koda
+	
+Koje dve reči u tabeli je neophodno podesiti na osnovu indeksa interapta u tabeli prekida:
+	- OCW1, ICW2

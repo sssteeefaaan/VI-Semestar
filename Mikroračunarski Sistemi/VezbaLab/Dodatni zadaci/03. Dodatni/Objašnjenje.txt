@@ -1,0 +1,45 @@
+ADRESNA ŠEMA:
+
+A15	A14	A13	A12	A11	A10	A9	A8	A7	A6	A5	A4	A3	A2	A1	A0	
+0	0	0	0	0	0	0	0	1	0	1	0	0	0	0	0	8255A	PORTA	A0H
+0	0	0	0	0	0	0	0	1	0	1	0	0	0	1	0	8255A	PORTB	A2H
+0	0	0	0	0	0	0	0	1	0	1	0	0	1	0	0	8255A	PORTC	A4H
+0	0	0	0	0	0	0	0	1	0	1	0	0	1	1	0	8255A	CONF	A6H
+0	0	0	0	0	0	0	0	1	0	1	0	1	0	0	0	8259	A0	A8H
+0	0	0	0	0	0	0	0	1	0	1	0	1	0	1	0	8259	A1	AAH
+0	0	0	0	0	0	0	0	1	0	1	0	1	1	0	0	8251	DATA	ACH
+0	0	0	0	0	0	0	0	1	0	1	0	1	1	1	0	8251	CONTROL AEH
+
+
+MAPIRANJE:
+
+PORTA		EQU	0A0H
+PORTB		EQU	0A2H
+PORTC		EQU	0A4H
+PORT_CONFIG	EQU	0A6H
+A_0		EQU	0A8H
+A_1		EQU	0AAH
+DATA_8251	EQU	0ACH
+CONTROL_8251	EQU	0AEH
+
+MODE_WORD	EQU	11111111B
+COMMAND_WORD	EQU	00010101B
+
+ICW1		EQU	13H
+ICW2 		EQU	0A8H
+ICW4		EQU	03H
+OCW1		EQU	0F5H
+
+PIC	komponenta 8259 je odobrana kada ADDR_DEC prijavi izlaz (0) na Y5 OR kada je A2 == 0, odnosno ovo se dešava kada je na adresnoj magistrali (A5, A4, A3) == (1, 0, 1) OR A2 == 0
+USART	komponenta 8251A je odobrana kada ADDR_DEC prijavi izlaz (0) na Y5 OR kada je A2 == 1, odnosno kada se na adresnoj magistrali javi (A5, A4, A4) == (1, 0, 1) OR A2 == 1
+PPI	komponenta 8255 je odabrana kada ADDR_DEC prijavi izlaz (0) na Y4, odnosno kada se na adresnoj magistrali javi (A5, A4, A3) == (1, 0, 0)
+
+Kontrolni signali iz procesora 8086 se vode na CTRL_DEC koji dekodira signale:
+	- Ukoliko se javi upis u PPI 		<=>	(M/IO, WR, RD) == (0, 0, 1) - Y1
+	- Ukoliko se javi čitanje iz PPI	<=>	(M/IO, WR, RD) == (0, 1, 0) - Y2
+
+Prekidi nastaju kada:
+	- Osoba uđe u sobu => IR3 => aktivira se INTIN procedura
+		COMPIM komponenta ima aktivan RxRDY kad god osoba uđe u prostoriju => aktivan IR3
+		(0, 0, 0, 0, 1, 1, 0, 0) => osoba ima stabilnu temperaturu i masku
+	- Osoba izađe iz sobe => IR1 => aktivira se INTOUT procedura

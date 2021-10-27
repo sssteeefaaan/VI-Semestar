@@ -1,0 +1,490 @@
+PIC16 ima 14bit instrukcije, 8 nivoa stek poziva
+Sastoji se od:
+	- CPU
+	- RAM - Memorija za podatke
+	- EEPROM - Memorija za podatke
+	- FLASH - programska memorija
+	- Slobodni brojač (8-bit)
+	- Watchdog brojač
+	- PORTA (5bit)
+	- PORTB (8bit)
+
+Pinovi:
+	- RA0-RA4 => PORT A, RA4 - T0CKI za tajmersku funkciju - spoljašnji tajmer
+	- RB0-RB7 => PORT B
+		- RB0/INT: (spoljašnji) interapt ulaz
+		- RB4-RB7: interapt ulaz (svi zajedno)
+	- Vdd: Pozitivan pol napajanja
+	- Vss: Napajanje, masa
+	- MCLR: Reset ulaz
+	- OSC1, OSC2: Pinovi namenjeni spajanju sa oscsilatorom
+	
+Oscilatori
+	- Procesorski takt predstavlja 1/4 spoljašnjeg takta oscilatora
+	- Najčešće se koriste dve vrste oscilatora
+		- Kristalni oscilator:
+			- LP – Low‐Power Crystal mod (32 kHz do 200kHz)
+			– XT – Medium Gain Crystal ili Ceramic Resonator Oscillator mod (100kHz do 4 MHz)
+			– HS – High Gain Crystal ili Ceramic Resonator mod (4 MHz do 20 MHz)
+		– Sa otpornikom i kondenzatorom (RC)
+			- RC – External Resistor‐Capacitor mod (200kHz do 4MHz)
+	- Mi uglavnom koristimo XT kristlani oscilator:
+		- Kondenzatori 33pF
+		- Crystal 1MHz
+
+Harvard RISC arhitektura
+	- Ima 8bit magistralu za memoriju podataka
+	- Ima 14bit magistralu za memoriju programa
+	- Omogućava istovremeno čitanje instrukcije i čitanje/upis podataka
+	
+Organizacija memorije
+	- Programski blok
+		- FLASH: 1Kx14b
+	- Blok za podatke:
+		- EEPROM: 64x8b
+		- RAM:
+			- SFR (registri specijalne namene):
+				- Dve memorijske banke
+				- Prvih 12 lokacija u banci 0 i 1
+			- GPR (registri opšte namene):
+				- 68x8b lokacije, pristup nezaviosno od banke
+	
+RAM struktura
+	
+	00h	 _______________________ 80h
+		|___BANK0___|___BANK1___|
+		|		  INDF			|
+		|	TMR0	|	OPTION	|
+		|		   PLC			|
+		|		  STATUS		|
+		|		   FSR			|
+		|	PORTA	|	TRISA	|
+		|	PORTB	|	TRISB	|
+		|						|
+		|	EEDATA	|	EECON1	|
+		|	EEADR	|	EECON2	|
+		|		 PCLATH			|
+		|________INTCON_________|
+		|						|
+		|	    68 bajtova		|
+		|	GPR - zajednički	|
+		|		za obe banke	|
+		|_______________________|
+	
+
+Portovi
+	- Svi pinova portova mogu proizvoljno da se definišu kao izlazni ili kao ulazni
+	- PIC16F84 ima dva porta
+		- PORTA (5bit)
+		- PORTB (8bit)
+	- Za konfiguraciju pinova određenog porta, koriste se registri:
+		- TRISA za pinove PORTA
+		- TRISB za pinove PORTB
+	- Pin je ulazni ako je bit na odgovarajućoj poziciji u odgovarajućem TRIS registru 1
+	- Pin je izlazni ukoliko je bit na odgovarajućoj poziciji u odgovarajućem registru 0
+	- Promena smera pinova se može vršiti u toku rada programa.
+	- PORTA, PORTB se nalaze u parnoj banci
+	- TRISA, TRISB se nalaze u neparnoj banci
+
+PORTA
+	- Ima 5 pinova
+	- Odgovarajući registar za smer podataka je TRISA
+	- RA4 pin
+		- Na tom pinu se još nalazi i spoljni ulaz za brojač TMR0
+		- Da li se ovaj pin bira kao standardni ulaz pin ili kao ulaz brojača koji se vodi na TMR0
+			- Precizira bit T0CS (TMR0 Clock Source Select bit) OPTION registra
+			- Ovaj bit omogućava da brojač TMR0 uvećava svoje stanje:
+				- Iz internog oscilatora ili
+				- Preko spoljnih impulsa na pinu RA4/T0CKI
+
+PORTB
+	- Ima 8 pinova
+	- Odgovarajući registar za smer podataka je TRISB
+	- Svaki pin na PORTB ima slabi interni pull-up otpornik (otpornik koji definiše liniju na logičku jedinicu)
+		- Može se aktivirati resetovanjem sedmog bita (RBPU) u registru OPTION
+		- Ovi "pull-up" otpornici se automatski isključe kada je pin porta konfigurisan kao izlaz.
+			- Pri uključenju miktokontrolera pull-up-ovi su onemogućeni
+	- RB7-RB4:
+		- Mogu izazvati prekid (interapt) koji se dešava kada se stanje na njima pormeni (rastuća/opdajuća ivica)
+	- RB0 se takođe koristi kao izvor prekida (rastuća/opdajuća ivica)
+
+STATUS registar
+	 _______________________________________________
+	|     |     |     |     |     |     |     |     |
+	| IRP | RP1 | RP0 | TO- | PD- |  Z  | DC  |  C  |
+	|_____|_____|_____|_____|_____|_____|_____|_____|
+
+	
+	- Bitovi:
+		7: IRP 			=> ne koristi se
+		6,5: (RP1, RP0) => koriste se za selekciju banke, s tim što PIC16F84A ima samo dve banke, pa RP1 nema uticaj i ne koristi se
+		4: TO- (timeout):
+			- 1 => Nakon dovođenja napajanja/CLRWDT/SLEEP
+			- 0 => Dogodio se timeout reset od WDT
+		3: PD- (power down):
+			- 1 => Nakon dovođenja napajanja ili CLRWDT
+			- 0 => Nakon SLEEP naredbe
+		2: Z (zero):
+			- 1 => Rezultat aritmetičke ili logičke operacije je bio 0
+			- 0 => Rezultat nije bio 0
+		1: DC (digit carry):
+			- 1 => Došlo je do prenosa iz niže u višu tetradu
+			- 0 => Nije došlo do prenosa iz niže u višu tetradu
+		0: C (carry/borrow):
+			- Sabiranje:
+				- 1 => Dogodio se prenos bita najviše pozicije
+				- 0 => Nije se dogodio prenos bita najviše pozicije
+			- Oduzimanje:
+				- 1 => Nije se pozajmio bit najviše pozicije
+				- 0 => Pozajmio se bit najviše pozicije
+				
+Vrste prekida kod PIC16F84
+ - Spoljašnji prekid na RB0/INT pinu mikrokontrolera
+ - Prekid prilikom promene na pinovima 4, 5, 6 i 7 porta B
+ - Prekid prilikom prekoračenja TMR0 brojača
+ - Prekid prilikom završetka upisivanja u EEPROM
+
+INTCON registar
+	 _______________________________________________________
+	|      |      |      |      |      |      |      |      |
+	| GIE  | EEIE | T0IE | INTE | RBIE | T0IF | INTF | RBIF |
+	|______|______|______|______|______|______|______|______|
+
+ - Bitovi:
+	7: GIE  => Bit globalne dozvole prekida
+		- 1 => Svi prekidi su omogućeni
+		- 0 => Svi prekidi su onemogućeni
+	6: EEIE => Dozvoljava prekid usled završetka upisa u EEPROM
+		- 1 => Omogućen prekida
+		- 0 => Onemogućen prekid
+	5: T0IE => Dozvoljava prekid usled prekoračenja TMR0:
+		- 1 => Omogućen
+		- 0 => Onemogućen
+	4: INTE => Dozvoljava prekid na RB0/INT priključku:
+		- 1 => Omogućen
+		- 0 => Onemogućen
+	3: RBIE => Dozvoljava prekid po promeni RB4-RB7:
+		- 1 => Omogućen
+		- 0 => Onemogućen
+	2: T0IF => Indikator (fleg) prekida TMR0:
+		- 1 => Došlo je do ove vrste prekida
+		- 0 => Nije došlo do ove vrste prekida
+	1: INTF => Indikator prekida RB0/INT:
+		- 1 => Došlo je do ove vrste prekida
+		- 0 => Nije došlo do ove vrste prekida
+	0: RBIF => Indikator prekida RB4-RB7:
+		- 1 => Došlo je do ove vrste prekida
+		- 0 => Nije došlo do ove vrste prekida
+
+* Postoji samo jedna prekidna rutina:
+	- Potrebno je pročitati INTCON registar (T0IF, INTF, RBIF)
+	- Potrebno je pročitati EECON1 registar (EEIF)
+	- Skočiti na deo koji obrađuje pročitanu vrstu prekida
+	- Resetovati pročitan fleg
+
+Struktura prekidne rutine
+ 1. Čuva se W (working register == radni registar) bez obzira na tekuću banku
+ 2. Čuva se STATUS registar u bank0
+ 3. Čuvaju se ostali registri
+ 4. Testiraju se interrupt fleg-ovi
+ 5. Izvršava se prekidna rutina za obradu detetovagnog prekida (ISR)
+ 6. Čisti se fleg obrađenog prekida
+ 7. Restaurišu se ostali prekidi
+ 8. Restauriše se STATUS registar
+ 9. Restauriše se W registar
+
+OPTION registar
+	 ___________________________________________________________________
+	|        |        |        |        |       |       |       |       |
+	|  RBPU- | INTEDG |  T0CS  |  T0SE  |  PSA  |  PS2  |  PS1  |  PS0  |
+	|________|________|________|________|_______|_______|_______|_______|
+
+ Bitovi:	
+	7: Not RBPU => Bit Pull-up otpornika PORTB:
+		- 1 => PORTB otpornici su isključeni
+		- 0 => PORTB otpornici su uključeni
+	6: INTEDG => Ivica za spoljašnji prekid RB0:
+		- 1 => Rastuća
+		- 0 => Opadajuća
+	5: T0CS => Izbor takta za TMR0:
+		- 1 => Spoljašnji (RA4)
+		- 0 => Interni CLK
+	4: T0SE => Izbor ivice za TMR0 kada radi sa spoljnim taktom (na RA4):
+		- 1 => Opadajuća ivica (1 => 0) inkrementira TMR0
+		- 0 => Rastuća ivica (0 => 1) inkrementira TMR0
+	3: PSA => Dodela preskalera:
+		- 1 => WDT tajmeru
+		- 0 => TMR0 tajmeru
+	2: PS2 \
+	1: PS1  > Bivoti za izbor odnosa deljenja preskalera
+	0: PS0 /
+	
+PRESKALER
+	- Preskaler je naziv za deo mikrokontrolera koji deli instrukcijski ciklus pre nego što on dođe do logike koja povećava stanje brojača.
+	- Dobija se mogućnost merenja dužih vremenskih perioda
+	
+	- Preskaler se može pridružiti jednom od dva brojača pomoću PSA bita
+		- TMR0
+		- Watchdog timer (WDT)
+	- PS2, PS1, PS0 definišu vrednost preskalera
+	
+	| Bitovi |  TMR0  |   WDT  |
+	|   000  |  1:2   |  1:1   |
+	|   001  |  1:4   |  1:2   |
+	|   010  |  1:8   |  1:4   |
+	|   011  |  1:16  |  1:8   |
+	|   100  |  1:32  |  1:16  |
+	|   101  |  1:64  |  1:32  |
+	|   110  |  1:128 |  1:64  |
+	|   111  |  1:256 |  1:128 |
+	
+TMR0 (Slobodni brojač)
+	- Pomoću njih se stvara relacija između realne veličine kao što je vreme, sa promenljivom koja predstavlja stanje brojača unutar mikrokontrolera
+	- PIC16F84 ima 8-bitni brojač
+	- Nakon svakog odbrojavanja do 255 brojač resetuje svoju vrednost na 0 i kreće sa novim ciklusom brojanja.
+	- Prilikom svakog prelaza sa 255 na 0, setuje se bit T0IF u INTCON registru
+	- Ukoliko je dozvoljena pojava prekida, onda se prelazi na prekidnu rutinu
+	- Na programeru je da resetuje T0IF u prekidnopj rutini, kako bi se detektovao novi prekid, odnosno prelaz 255=>0
+	
+Watchdog timer (Sigurnosni brojač)
+	- Mehanizam miktrokontrolera kojim se mikrokontroler brani od zaglavljivanja programa.
+	- Kao i kod svakog elektronskog kola, i kod mikrokontrolera može doći do kvara ili nepravilnog rada.
+	- Kada se to desi, mikrokontroler će stati sa radom i ostati u tom stanju sve dok ga neko ne resetuje.
+	- Zbog toga je uveden mehanizam watchdog timer-a, koji nakon određenog vremena, resetuje mikrokontroler (mikrokontroler sam sebe resetuje).
+	- Watchdog timer radi na jednostavnom principu:
+		- Ako dođe do prekoračenja brojača, mikrokontroler se resetuje i kreće sa izvršavanjem programa iz početka.
+	- Sledeći korak je sprečavanje reseta u slučaju pravilnog rada, što se postiže upisom nule u WDT registar (CLRWDT) svaki put kada se približi svom prekoračenju, čime će program sprečiti reset sve dok se pravilno izvršava.
+	- Jednom, kada dođe do zaglavljivanja, nula neće biti upisana, doći će do prekoračenja WDT brojača i desiće se reset koji će mikrokontroler ponovo vratiti u pravilan rad.
+	
+Primer podešavanja presklaera
+	- Neka je radni takt mikrokontrolera 3.2768MHz. Potrebno je podesiti vrednost OPTION registra tako da se svaki od displeja osvežava frekvencijom od po 200Hz, pri čemu imamo 2 displeja.
+	
+	Formula:
+		2^15 * 100Hz/(2^2 * 2^8 * 2^(n+1)) = XHz
+		X = 2 * 200 = 400
+		
+		=> n = 2
+		OPTION_REG = 1XX0 0010 = 1000 0010 (nisu uključeni otpornici na PORTB)
+		
+		MOVLW 0x82 (Učitamo konstantu u radni registar)
+		MOVWF OPTION_REG (Prebacimo u OPTION_REG iz radnog)
+		
+EECON1 registar
+	 ______________________________________________________
+	|     |     |     |      |        |      |      |      |
+	|  -  |  -  |  -  | EEIF | WREERR | WREN |  WR  |  RD  |
+	|_____|_____|_____|______|________|______|______|______|
+
+ Bitovi:
+	4: EEIF  => Interrupt fleg za detekciju prekida nakon upisa u EEPROM
+	3: WRERR => Greška pri prenosu
+	2: WREN  => Omogućiti upis
+	1: WR 	 => Izvršiti upis
+	0: RD 	 => Izvršiti čitanje
+
+Prekid prilikom završetka upisa u EEPROM
+	- Prekid može biti uključen/isključen setovanjem/resetovanjem EEIE bita u INTCON registru
+	- Ovaj preki je čisto praktične prirode. Kako upis u jednu lokaciju EEPROM-a traje oko 10ms (što je za pojmove mikrokontrolera veoma sporo), to se mikrokontrolelu ne isplati da čeka da se taj upis završi
+	- Dodat je mehanizam prekida po kome on može da nastavi izvršavanje glavnog programa, dok se u pozadini vrši upis u EEPROM
+	- Kada se upis završi, prekid obaveštava mikrokontroler da je upis gotov
+	- Bit EEIF, kojim se ovo obaveštenje vrši, nalazi se u registru EECON1.
+	- Pojava prekida može biti onemogućena resetovanjem EEIE bita u INTCON registru.
+	
+FSR i INDF registri
+	- Indirektno adresiranje se ostvaruje pomoću INDF i FSR registara
+	- FSR čuva adresu
+	- Korišćenjem INDF dobijamo vrednost na adresi iz FSR
+	- Primer:
+		- Ako na adresi 0Fh imamo vrednost 20, upisom vrednosti 0Fh u registar FSR, dobićemo pokazivač na registar na adresi 0Fh.
+		- Čitanjem iz registra INDF dobijamo vrednost 20, što znači da smo iz prvog registra pročitali njegovu vrednost 20.
+		- To znači da smo iz prvog registra pročitali njegovu vrednost, a da mu nismo direktno pristupili (već preko FSR i INDF)
+	- Indirektno adresiranje je veoma pogodno kada se vrše operacije sa nizovima podataka koji su smešteni u okviru GPR registra.
+	- U tom slučaju je na početku potrebno inicijalizovati registar FSR na vredst adrese prvog člana niza, a zatim se narednim članovima niza pristupa uvećavanjem registra FSR.
+
+Mašinski jezik mikrokontrolera PIC16F84
+ - RISC (Reduced Instruction Set Computer), redukovani skup intruksikcija
+ - 14-bitne instrukcije
+ - U zavisnosti od tipa, mogu sadržati sledeće elemente
+	- f => Memorijski (fajl) registar (7-bit)
+	- d => Destinacioni bit (1-bit)
+		- d == 0 => destinacija je akumulator/radni/working registar (w)
+		- d == 1 => destinacija je memorijski registar
+	- b => Kod odgovarajućeg bita u registru (3-bit)
+	- k => Konstanta (literal)
+		- 8-bit => Operacije za rad sa memorijskim registrima
+		- 11-bit => Operacije bezuslovnog skoka (adresa skoka)
+		
+Tipovi mašinskih instrukcija PIC16F84
+	- Tri grupe:
+		- Bajt-orijantisane za rad sa memorijskim registrima
+		- Bit-orijentisane za rad sa memorijskim registrima
+		- Kontrolne instrukcije i rad sa literalima
+	- Sve instrukcije se izvršavaju u jednom taktu procesora, izuzev:
+		- Instrukcija skoka (uslovni, bezuslovni)
+		- Poziva i povratka iz potprograma
+		* Ove instrukcije se izvršavaju u dva takta!
+		
+Bajt-orijentisane naredbe za rad sa memorijskim registrima
+	 _____________________________________________________
+	| 13		   8 | 7		  	   | 6			    0 |
+	|				 |			  	   |			      |
+	| Operacioni kod | Destinacija (d) | Fajl registar(f) |
+	|________________|_________________|__________________|
+
+ - MOVF f, d => sadržaj registra f se smešta u w/f registar
+	- d == 0 => w <= f
+	- d == 1 => f <= f (korisno za testiranje ZERO FLAG-a)
+ - SWAPF f, d => Niža i viša četvorka osmobitnog file registra menjaju mesta, a rez ide u working(d==0)/file(d==1)
+ - [ADDWF, ANDWF, SUBWF, IORWF, XORWF] f, d
+     ______________________________________
+	| Opcode |    d == 0    |    d == 1    |
+	|--------|--------------|--------------|
+	| ADDWF  | w <= f  +  w | f <= f  +  w |
+	| SUBWF  | w <= f  -  w | f <= f  -  w |
+	| ANDWF  | w <= f and w | f <= f and w |
+	| IORWF  | w <= f  or w | f <= f  or w |
+	| XORWF  | w <= f xor w | f <= f xor w |
+	|________|______________|______________|
+	
+ - COMF REGISTAR, d => w <= kompement(REGISTAR)/ REGISTAR <= komplement(REGISTAR)
+ - INCF f, d => inkrementiranje
+ - DECF f, d => dekrementiranje
+ - RRF f, d  => rotiranje udesno sa carry flag-om
+ - RLF f, d  => rotiranje ulevo sa carry flag-om
+
+Bit-orijentisane naredbe za rad sa memorisjkim registrima
+	 ________________________________________________
+	| 13		  10 | 9		7 | 6			   0 |
+	|				 |			  |					 |
+	| Operacioni kod | Bit kod(b) | Fajl registar(f) |
+	|________________|____________|__________________|
+
+	- BTFSS f, b => Bit Test Flag Skip if Set => Preskače jednu (sledeću) instrukciju akko je f[b] == 1
+	- BTFSC f, b => Bit Test Flag Skip if Clear => Preskače jednu (sledeću) instrukciju akko je f[b] == 0
+	- BSF f, b => f[b] <= 1
+	- BCF f, b => f[b] <= 0
+	
+Rad sa literalima (memorijski registri)
+	 __________________________________
+	| 13		   		8 | 7	     0 |
+	|				 	  |			   |
+	| Operacioni kod 	  | Literal(k) |
+	|_____________________|____________|
+
+	- k je u ovom slučaju 8-bit konstanta
+	- MOVLW k
+		w <= k
+	- [ADDLW, ANDLW, SUBLW, IORLW, XORLW] k
+		 _______________________
+		| Opcode |              |
+		|--------|--------------|
+		| ADDWF  | w <= k  +  w |
+		| SUBWF  | w <= k  -  w |
+		| ANDWF  | w <= k and w |
+		| IORWF  | w <= k  or w |
+		| XORWF  | w <= k xor w |
+		|________|______________|
+	
+	- RETLW k => povratak iz interapra uz w <= k
+
+Rad sa literalima (skokovi)
+	 __________________________________________________
+	| 13		   	   11 | 10					     0 |
+	|				 	  |			  				   |
+	| Operacioni kod 	  | Apsolutna adresa skoka (k) |
+	|_____________________|____________________________|
+	- k je u ovom slučaju 11-bit konstanta
+	- GOTO k
+		- w <= k
+		- Bezuslovni skok
+	- CALL k
+		- Poziv potprograma
+
+CONFIGURATION WORD
+	 _________________________________________________________
+	|      |     |     |      |        |      |       |       |
+	|  CP  | ... | ... |  CP  | PWRTE- | WDTE | FOSC1 | FOSC0 |
+	|______|_____|_____|______|________|______|_______|_______|
+
+ Bitovi:
+	13-4: CP (Code Protection):
+		- 1 => Zaštita isključena
+		- 0 => Programska memorija zaštićena
+	3: PWRTE- => Power-Up timer
+		- 1 => Isključen Power-Up timer
+		- 0 => Uključen Power-Up timer
+	2:
+	1-0: FOSC1, FOSC0 => Selekcija tipa oscilatora
+		- 00 => RC
+		- 01 => HS
+		- 10 => XT
+		- 11 => LP
+		
+Stek
+	- 13-bitni stek (Stack) sa 8 nivoa ili drugi rečima
+	- Grupisanih 8 memorijskih lokacija širine 13-bita sa posebnom namenom
+	- Njegova osnovna ulog je da sačuva vrednost programskog brojača nakon što se iz glavnog programa skoči na adresu potprograma koji se izvršava.
+	- Da bi program znao da se vrati na mesto odakle je pošao, mora sa steka da vrati vrednost programskog brojača.
+	- Pri prelasku iz programa u potprogram, programski brojač se potiskuje na stek (Primer instrukcija CALL)
+	- Pri izvršenju instrukcija RETURN, RETLW, RETFIE koje se izvršavaju na kraju potprograma, sa steka se uzima vrednost programskog brojača kako bi se program nastavio odakle se desio poziv.
+	- Ove operacije stavljanja i vraćanja programskog brojača na stek i sa steka se u žargonu nazivaju PUSH i POP i sa tim imenom postoje na nekim većim mikrokontrolerima.
+	
+Programski brojač
+	- Programski brojač (PC) je 13-bitni registar koji sadrži adresu instrukcije koja se izvršava
+	- Fizički se realizuje pomoću:
+		- PCLATH => 5 viših bitova adrese
+		- PCL => 8 nižih bitova adrese
+	- Njegovim uvećavanjem ili promenom (npr. u slučaju skoka), mikrokontroler izvršava jednu po jednu instrukciju programa.
+	
+Selekcija memorijske banke
+	- Za pristup specijalnim registrima, potrebno je pored navođenja imena registra u okviru instrukcije prethodno selektovati odgovarajuću banku.
+	- Selekcija banke se može izvršiti:
+		=> BANKSEL SFR_REGISTAR => bira se banka u kojoj se nalazi SFR_REGISTAR, ne moramo da znamo da li je parna ili neparna
+		=> Selekcija parne banke
+			=> BCF STATUS, RP0
+			=> BCF STATUS, 5
+		=> Selekcija neparne banke
+			=> BSF STATUS, RP0
+			=> BSF STATUS,  5
+
+Čitanje EEPROM memorije
+	- Setovanje bita RD inicira prenos podataka sa adrese koja se nalazi u registru EEADR u EDATA registar
+	- Kako za čitanje podataka nije potrebno vreme kao za upis, preuzeti podatak iz EEDATA registra može se već u narednoj instrukciji koristiti dalje
+	- Primer čitanja sadržaja EEPROM memorije:
+		BCF STTATUS, ROP; BANKSEL EEADR
+		MOVLW 0X00
+		MOVWF EEADR
+		BSF STATUS RP0; BANKSEL EECON1
+		BSF EECON1, RD
+		BCF STATUS, RP0; BANKSEL EEDATA
+		MOVF EEDATA, W
+		* Nakon poslednje programske instrukcije, sadržaj as adrese nula EEPROM se nalazi u radnom registru (w).
+	
+Inicijalizacija prekida
+	CLRF INTCON; 		SVI PREKIDI SU ONEMOGUĆENI
+	MOVLW B'00010000';	KOD ZA OMOGUĆAVANJE SPOLJNOG PREKIDA
+	MOVWF INTCON;		PREBACIVANJE SADRŽAJA W U INTCON
+	;BSF INTCON, INTE
+	BSF INTCON, GIE;	SETOVANJE GLOBAL INTERRUPT FLAG-A (DOZVOLJENI PREKIDI)
+	
+Čuvanje sadržaja važnih registara
+	- Za vreme prekida, samo se povratna vrednost brojača čuva na steku (adresa instrukcije koja je trebalo da se izvrši pre prekida)
+	- PIC16F84A nema PUSH i POP instrukcije, pa se one programski konstruišu
+	- Za razmenu podataka između registara koristi se instrukcija SWAPF umesto MOVF, jer SWAPF ne utiče na STATUS registar, za razliku od MOVF (SETUJE Z FLEG)
+	- SWAP f, d => zamena više i niže tetrade u registru f.
+	* Šablon prekidne procedure:
+		- Čuvanje konteksta
+			MOVWF WREG_TEMP; NE UTIČE NA STATUS REGISTAR
+			SWAPF STATUS, W; NE UTIČE NA STATUS REGISTAR
+			CLRF STATUS
+			MOVWF STATUS_TEMP; NE UTIČE NA STATUS REGISTAR
+		- Testiranje flegova interaptova
+		- Izvršavanje obrade
+		- Restauracija konteksta
+			SWAPF STATUS_TEMP, W
+			MOVWF STATUS
+			SWAPF WREG_TEMP, F
+			SWAPF WREG_TEMP, W
+			RETFIE
+
+

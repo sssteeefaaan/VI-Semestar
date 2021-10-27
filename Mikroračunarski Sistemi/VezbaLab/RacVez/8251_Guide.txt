@@ -1,0 +1,126 @@
+8251
+
+CS' - C/D' - WR' - RD'
+ 0     0     0     1  => UPIS PODATAKA
+ 0     0     1     0  => ČITANJE PODATAKA
+ 0     1     0     1  => UPIS KONTROLNE REČI
+ 0     1     1     0  => ČITANJE STATUSA
+ 1     X     X     X  => ONEMOGUĆENO
+----------------------------------------------------------------------------------------------------------------------------------
+Mode word - asinhroni prenos
+
+Stop bit
+(S2, S1)
+	(0, 1) => 1 stop bit
+	(1, 0) => 1.5 stop bit
+	(1, 1) => 2 stop bita
+	
+Even Parity, Parity ENable
+(EP, PEN)
+	(0, 0) => disable
+	(0, 1) => neparna parnost
+	(1, 0) => disable
+	(1, 1) => parna parnost
+
+Broj bitova po karakteru (byte-u)
+(L2, L1)
+	(0, 0) => 5 bits/byte
+	(0, 1) => 6 bits/byte
+	(1, 0) => 7 bits/byte
+	(1, 1) => 8 bits/byte
+
+Baud rate factor
+(B2, B1)
+	(0, 0) - Sync
+	(0, 1) - 1x
+	(1, 0) - 16x
+	(1, 1) - 64x
+
+----------------------------------------------------------------------------------------------------------------------------------
+Mode word -> sinhroni prenos
+
+SCS => broj karaktera (0 == dva, 1 == jedan)
+ESD => Sync mode (0 == interna, 1 == eksterna)
+(EP, PEN)
+	(0, 0) => disable
+	(0, 1) => neparna parnost
+	(1, 0) => disable
+	(1, 1) => parna parnost
+(L2, L1)
+	(0, 0) => 5 bits/byte
+	(0, 1) => 6 bits/byte
+	(1, 0) => 7 bits/byte
+	(1, 1) => 8 bits/byte
+Poslednja dva bita nisu u upotrebi
+
+----------------------------------------------------------------------------------------------------------------------------------
+Command word
+Uvek treba normal mode (SRT i DTR na 0)
+SBRK u normalnom režimu
+
+Enable Hunt
+EH
+	0 - Normal
+	1 - Hunt mode
+Internal Reset
+IR
+	0 - Normal
+	1 - Internal reset
+RST - kontrola modema
+	0 - RTS=>1
+	1 - RTS=>0
+ER
+	0 - Normal
+	1 - Reset error flag
+SBRK
+	0 - Normalan režim
+	1 - Slanje karaktera prekida
+RXE - Omogućiti prijemnik
+DTR - kontrola modema
+	0 - DTR=>1
+	1 - DTR=>0
+TXEN - Omogućiti predajnik
+
+----------------------------------------------------------------------------------------------------------------------------------
+Dijagram stanja 8251
+
+UVEK!!!
+DX IMA KONTROLNU ADRESU
+1. OUT DX, 00
+2. OUT DX, 00
+3. OUT DX, 00
+4. OUT DX, 40H RESET
+UVEK!!!!!
+
+5. OUT DX, MODE
+6. OUT DX, COMMAND
+
+----------------------------------------------------------------------------------------------------------------------------------
+Statusni registar - Proverava status periferijskog uređaja i sadrži informacije o greškama nastalih u prenosu
+Najbitniji flegovi:
+Framing Error - nije detektovan start ili stop bit
+Overrun Error - procesor nije pročitao prethodni podatak koji se nalazio u internom bufferu
+Parity Error - greška parnosti
+
+Sadržaj statusnog registra (1 znači da je došlo do greške)
+DSR - Data Set Ready
+SYNDENT BRKDET - Sync Detect/Break Error
+FE - Framing Error
+OE - Overrun Errork
+PE - Parity Error
+TxE - Transmitter Empty
+RxRDY - Receiver Ready => Podaci su primljeni u buffer
+TXRDY - Transmitter Ready => Izlazni buffer je prazan
+
+----------------------------------------------------------------------------------------------------------------------------------
+Taktovanje 8251
+Klok ide na CLK, TxC i RxC
+
+Na TxC/RxC dolazi frekvencija = T/R baud rate * baud rate coefficient
+Baud rate podešavamo na komponenti (COM)
+Baud rate coefficient podešavamo kroz Mode word (00 - sync, 01 - x1, 10 - x16, 11 - x64)
+Frekvencija kloka povezanog na CLK je BAR 4.5 puta veća od onog na TxC/RxC
+
+=> COM baud rate = 1200, Mode Word Async == 01 00 11 10 (stop_bit, even_parity, bits_per_character, baud_rate_factor)
+=> TxC/RxC frekvencija = 1200 * 16 = 19200 => 19.2kHz
+=> CLK frekvencija = 1920 * 45 = 86400 => 86.4kHz
